@@ -6,7 +6,48 @@ import (
 	"testing"
 )
 
-func TestReserve_ConcurrentOversell(t *testing.T) {
+func TestUnsafeReserve_ConcurrentOversell(t *testing.T) {
+	svc := NewUnsafeInventoryService(map[string]*Product{
+		"p1": {ID: "p1", Name: "Widget", Stock: 100},
+	})
+
+	const goroutines = 200
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+
+	var success int32
+	var failed int32
+
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			err := svc.Reserve("p1", 1)
+			if err == nil {
+				atomic.AddInt32(&success, 1)
+				return
+			}
+			if err == ErrInsufficientStock {
+				atomic.AddInt32(&failed, 1)
+				return
+			}
+			t.Errorf("unexpected error: %v", err)
+		}()
+	}
+
+	wg.Wait()
+
+	if success != 100 {
+		t.Fatalf("expected 100 successes, got %d", success)
+	}
+	if failed != 100 {
+		t.Fatalf("expected 100 failures, got %d", failed)
+	}
+	if got := svc.GetStock("p1"); got != 0 {
+		t.Fatalf("expected stock to be 0, got %d", got)
+	}
+}
+
+func TestSafeReserve_ConcurrentOversell(t *testing.T) {
 	svc := NewSafeInventoryService(map[string]*Product{
 		"p1": {ID: "p1", Name: "Widget", Stock: 100},
 	})
