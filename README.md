@@ -1,4 +1,4 @@
-# Inventory Service (Thread-Safe)
+# Thread-Safe-Inventory-Service
 
 Thread-safe inventory management service with atomic stock reservations, a simple CLI, and concurrent tests.
 
