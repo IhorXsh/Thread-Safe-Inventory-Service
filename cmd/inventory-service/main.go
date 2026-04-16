@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -15,10 +16,13 @@ func main() {
 		os.Exit(2)
 	}
 
-	svc := inventory.NewSafeInventoryService(map[inventory.ProductID]*inventory.Product{
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	slog.SetDefault(logger)
+
+	svc := inventory.NewSafeInventoryServiceWithLogger(map[inventory.ProductID]*inventory.Product{
 		"A": inventory.NewProduct("A", "Widget A", 10),
 		"B": inventory.NewProduct("B", "Widget B", 5),
-	})
+	}, logger)
 
 	switch os.Args[1] {
 	case "get":
