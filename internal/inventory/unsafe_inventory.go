@@ -8,7 +8,7 @@ func NewUnsafeInventoryService(products map[ProductID]*Product) *UnsafeInventory
 	return &UnsafeInventoryService{products: products}
 }
 
-func (s *UnsafeInventoryService) GetStock(productID string) int {
+func (s *UnsafeInventoryService) GetStock(productID string) uint64 {
 	product := s.products[ProductID(productID)]
 	if product == nil {
 		return 0
@@ -16,7 +16,7 @@ func (s *UnsafeInventoryService) GetStock(productID string) int {
 	return product.GetStock()
 }
 
-func (s *UnsafeInventoryService) Reserve(productID string, quantity int) error {
+func (s *UnsafeInventoryService) Reserve(productID string, quantity uint64) error {
 
 	product := s.products[ProductID(productID)]
 	if product == nil {

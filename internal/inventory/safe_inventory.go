@@ -13,7 +13,7 @@ func NewSafeInventoryService(products map[ProductID]*Product) *SafeInventoryServ
 	return &SafeInventoryService{products: products}
 }
 
-func (s *SafeInventoryService) GetStock(productID string) int {
+func (s *SafeInventoryService) GetStock(productID string) uint64 {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -24,7 +24,7 @@ func (s *SafeInventoryService) GetStock(productID string) int {
 	return product.GetStock()
 }
 
-func (s *SafeInventoryService) Reserve(productID string, quantity int) error {
+func (s *SafeInventoryService) Reserve(productID string, quantity uint64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

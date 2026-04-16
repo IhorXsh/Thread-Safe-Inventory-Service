@@ -34,8 +34,8 @@ func main() {
 			os.Exit(2)
 		}
 		id := os.Args[2]
-		qty, err := strconv.Atoi(os.Args[3])
-		if err != nil || qty <= 0 {
+		qty, err := strconv.ParseUint(os.Args[3], 10, 64)
+		if err != nil || qty == 0 {
 			fmt.Fprintln(os.Stderr, "quantity must be a positive integer")
 			os.Exit(2)
 		}
@@ -74,8 +74,8 @@ func parseItems(arg string) ([]inventory.ReserveItem, error) {
 		if len(p) != 2 {
 			return nil, fmt.Errorf("invalid item %q, expected ID:QTY", part)
 		}
-		qty, err := strconv.Atoi(p[1])
-		if err != nil || qty <= 0 {
+		qty, err := strconv.ParseUint(p[1], 10, 64)
+		if err != nil || qty == 0 {
 			return nil, fmt.Errorf("invalid quantity for %q", part)
 		}
 		items = append(items, inventory.ReserveItem{
