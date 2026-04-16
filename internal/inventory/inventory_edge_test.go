@@ -11,7 +11,7 @@ func TestSafeInventory_EdgeCases(t *testing.T) {
 			"A": NewProduct("A", "A", 10),
 		})
 
-		err := svc.Reserve("", 1)
+		err := svc.Reserve(ReserveItem{ProductID: "", Quantity: 1})
 		if !errors.Is(err, ErrProductNotFound) {
 			t.Fatalf("expected ErrProductNotFound, got %v", err)
 		}
@@ -22,7 +22,7 @@ func TestSafeInventory_EdgeCases(t *testing.T) {
 			"A": NewProduct("A", "A", 10),
 		})
 
-		err := svc.Reserve("A", 0)
+		err := svc.Reserve(ReserveItem{ProductID: "A", Quantity: 0})
 		if !errors.Is(err, ErrInvalidQuantity) {
 			t.Fatalf("expected ErrInvalidQuantity, got %v", err)
 		}

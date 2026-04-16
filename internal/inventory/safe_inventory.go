@@ -39,28 +39,28 @@ func (s *SafeInventoryService) GetStock(productID string) uint64 {
 	return stock
 }
 
-func (s *SafeInventoryService) Reserve(productID string, quantity uint64) error {
+func (s *SafeInventoryService) Reserve(item ReserveItem) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if quantity == 0 {
-		s.logger.Warn("reserve failed: invalid quantity", "product_id", productID, "quantity", quantity)
+	if item.Quantity == 0 {
+		s.logger.Warn("reserve failed: invalid quantity", "product_id", item.ProductID, "quantity", item.Quantity)
 		return ErrInvalidQuantity
 	}
 
-	product := s.products[ProductID(productID)]
+	product := s.products[ProductID(item.ProductID)]
 	if product == nil {
-		s.logger.Warn("reserve failed: product not found", "product_id", productID, "quantity", quantity)
+		s.logger.Warn("reserve failed: product not found", "product_id", item.ProductID, "quantity", item.Quantity)
 		return ErrProductNotFound
 	}
 
-	if product.GetStock() < quantity {
-		s.logger.Warn("reserve failed: insufficient stock", "product_id", productID, "quantity", quantity, "stock", product.GetStock())
+	if product.GetStock() < item.Quantity {
+		s.logger.Warn("reserve failed: insufficient stock", "product_id", item.ProductID, "quantity", item.Quantity, "stock", product.GetStock())
 		return ErrInsufficientStock
 	}
 
-	product.SetStock(product.GetStock() - quantity)
-	s.logger.Info("reserve successful", "product_id", productID, "quantity", quantity, "stock", product.GetStock())
+	product.SetStock(product.GetStock() - item.Quantity)
+	s.logger.Info("reserve successful", "product_id", item.ProductID, "quantity", item.Quantity, "stock", product.GetStock())
 	return nil
 }
 

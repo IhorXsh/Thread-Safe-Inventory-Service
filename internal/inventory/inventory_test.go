@@ -23,7 +23,7 @@ func TestReserve_ConcurrentOversell(t *testing.T) {
 		for i := 0; i < goroutines; i++ {
 			go func() {
 				defer wg.Done()
-				err := svc.Reserve("p1", 1)
+				err := svc.Reserve(ReserveItem{ProductID: "p1", Quantity: 1})
 				if err == nil {
 					atomic.AddInt32(&success, 1)
 					return
@@ -58,7 +58,7 @@ func TestReserve_ConcurrentOversell(t *testing.T) {
 		for i := 0; i < goroutines; i++ {
 			go func() {
 				defer wg.Done()
-				err := svc.Reserve("p1", 1)
+				err := svc.Reserve(ReserveItem{ProductID: "p1", Quantity: 1})
 				if err == nil {
 					atomic.AddInt32(&success, 1)
 					return

@@ -32,24 +32,24 @@ func (s *UnsafeInventoryService) GetStock(productID string) uint64 {
 	return stock
 }
 
-func (s *UnsafeInventoryService) Reserve(productID string, quantity uint64) error {
-	if quantity == 0 {
-		s.logger.Warn("unsafe reserve failed: invalid quantity", "product_id", productID, "quantity", quantity)
+func (s *UnsafeInventoryService) Reserve(item ReserveItem) error {
+	if item.Quantity == 0 {
+		s.logger.Warn("unsafe reserve failed: invalid quantity", "product_id", item.ProductID, "quantity", item.Quantity)
 		return ErrInvalidQuantity
 	}
 
-	product := s.products[ProductID(productID)]
+	product := s.products[item.ProductID]
 	if product == nil {
-		s.logger.Warn("unsafe reserve failed: product not found", "product_id", productID, "quantity", quantity)
+		s.logger.Warn("unsafe reserve failed: product not found", "product_id", item.ProductID, "quantity", item.Quantity)
 		return ErrProductNotFound
 	}
 
-	if product.GetStock() < quantity {
-		s.logger.Warn("unsafe reserve failed: insufficient stock", "product_id", productID, "quantity", quantity, "stock", product.GetStock())
+	if product.GetStock() < item.Quantity {
+		s.logger.Warn("unsafe reserve failed: insufficient stock", "product_id", item.ProductID, "quantity", item.Quantity, "stock", product.GetStock())
 		return ErrInsufficientStock
 	}
 
-	product.SetStock(product.GetStock() - quantity)
-	s.logger.Info("unsafe reserve successful", "product_id", productID, "quantity", quantity, "stock", product.GetStock())
+	product.SetStock(product.GetStock() - item.Quantity)
+	s.logger.Info("unsafe reserve successful", "product_id", item.ProductID, "quantity", item.Quantity, "stock", product.GetStock())
 	return nil
 }
