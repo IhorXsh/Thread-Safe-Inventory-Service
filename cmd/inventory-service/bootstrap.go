@@ -37,10 +37,10 @@ func run() error {
 		}
 	}()
 
-	svc := inventory.NewSafeInventoryServiceWithLogger(map[inventory.ProductID]*inventory.Product{
+	svc := inventory.NewSafeInventoryService(map[inventory.ProductID]*inventory.Product{
 		"A": inventory.NewProduct("A", "Widget A", 10),
 		"B": inventory.NewProduct("B", "Widget B", 5),
-	}, logger)
+	})
 
 	httpAPI := server.New(svc, logger, otel.Tracer("inventory-http"))
 

@@ -25,6 +25,10 @@ type Server struct {
 }
 
 func New(svc *inventory.SafeInventoryService, logger *slog.Logger, tracer trace.Tracer) *Server {
+	if logger == nil {
+		logger = slog.Default()
+	}
+
 	reqDuration := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "inventory_http_request_duration_seconds",
@@ -65,6 +69,7 @@ func New(svc *inventory.SafeInventoryService, logger *slog.Logger, tracer trace.
 	}
 
 	s.router.Use(s.observabilityMiddleware)
+	s.router.HandleFunc("/healthz", s.handleHealthz).Methods(http.MethodGet)
 	s.router.HandleFunc("/stock/{productID}", s.handleGetStock).Methods(http.MethodGet)
 	s.router.HandleFunc("/reserve", s.handleReserve).Methods(http.MethodPost)
 	s.router.HandleFunc("/reserve-multiple", s.handleReserveMultiple).Methods(http.MethodPost)

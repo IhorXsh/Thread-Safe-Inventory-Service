@@ -10,3 +10,16 @@ type ReserveRequest struct {
 type ReserveMultipleRequest struct {
 	Items []ReserveRequest `json:"items"`
 }
+
+type ResponseStatus string
+
+const (
+	StatusOK    ResponseStatus = "ok"
+	StatusError ResponseStatus = "error"
+)
+
+type Response struct {
+	Status ResponseStatus `json:"status"`
+	Error  string         `json:"error,omitempty"`
+	Data   any            `json:"data,omitempty"`
+}
