@@ -7,8 +7,8 @@ import (
 )
 
 func TestUnsafeReserve_ConcurrentOversell(t *testing.T) {
-	svc := NewUnsafeInventoryService(map[string]*Product{
-		"p1": {ID: "p1", Name: "Widget", Stock: 100},
+	svc := NewUnsafeInventoryService(map[ProductID]*Product{
+		"p1": NewProduct("p1", "Widget", 100),
 	})
 
 	const goroutines = 200
@@ -48,8 +48,8 @@ func TestUnsafeReserve_ConcurrentOversell(t *testing.T) {
 }
 
 func TestSafeReserve_ConcurrentOversell(t *testing.T) {
-	svc := NewSafeInventoryService(map[string]*Product{
-		"p1": {ID: "p1", Name: "Widget", Stock: 100},
+	svc := NewSafeInventoryService(map[ProductID]*Product{
+		"p1": NewProduct("p1", "Widget", 100),
 	})
 
 	const goroutines = 200
@@ -89,9 +89,9 @@ func TestSafeReserve_ConcurrentOversell(t *testing.T) {
 }
 
 func TestReserveMultiple_Atomicity(t *testing.T) {
-	svc := NewSafeInventoryService(map[string]*Product{
-		"A": {ID: "A", Name: "A", Stock: 10},
-		"B": {ID: "B", Name: "B", Stock: 5},
+	svc := NewSafeInventoryService(map[ProductID]*Product{
+		"A": NewProduct("A", "A", 10),
+		"B": NewProduct("B", "B", 5),
 	})
 
 	err := svc.ReserveMultiple([]ReserveItem{

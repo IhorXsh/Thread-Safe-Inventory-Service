@@ -6,10 +6,10 @@ import (
 
 type SafeInventoryService struct {
 	mu       sync.RWMutex
-	products map[string]*Product
+	products map[ProductID]*Product
 }
 
-func NewSafeInventoryService(products map[string]*Product) *SafeInventoryService {
+func NewSafeInventoryService(products map[ProductID]*Product) *SafeInventoryService {
 	return &SafeInventoryService{products: products}
 }
 
@@ -17,27 +17,27 @@ func (s *SafeInventoryService) GetStock(productID string) int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	product := s.products[productID]
+	product := s.products[ProductID(productID)]
 	if product == nil {
 		return 0
 	}
-	return product.Stock
+	return product.GetStock()
 }
 
 func (s *SafeInventoryService) Reserve(productID string, quantity int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	product := s.products[productID]
+	product := s.products[ProductID(productID)]
 	if product == nil {
 		return ErrProductNotFound
 	}
 
-	if product.Stock < quantity {
+	if product.GetStock() < quantity {
 		return ErrInsufficientStock
 	}
 
-	product.Stock -= quantity
+	product.SetStock(product.GetStock() - quantity)
 	return nil
 }
 
@@ -50,13 +50,14 @@ func (s *SafeInventoryService) ReserveMultiple(items []ReserveItem) error {
 		if product == nil {
 			return ErrProductNotFound
 		}
-		if product.Stock < item.Quantity {
+		if product.GetStock() < item.Quantity {
 			return ErrInsufficientStock
 		}
 	}
 
 	for _, item := range items {
-		s.products[item.ProductID].Stock -= item.Quantity
+		product := s.products[item.ProductID]
+		product.SetStock(product.GetStock() - item.Quantity)
 	}
 
 	return nil

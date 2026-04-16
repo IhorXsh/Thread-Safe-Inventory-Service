@@ -1,32 +1,32 @@
 package inventory
 
 type UnsafeInventoryService struct {
-	products map[string]*Product
+	products map[ProductID]*Product
 }
 
-func NewUnsafeInventoryService(products map[string]*Product) *UnsafeInventoryService {
+func NewUnsafeInventoryService(products map[ProductID]*Product) *UnsafeInventoryService {
 	return &UnsafeInventoryService{products: products}
 }
 
 func (s *UnsafeInventoryService) GetStock(productID string) int {
-	product := s.products[productID]
+	product := s.products[ProductID(productID)]
 	if product == nil {
 		return 0
 	}
-	return product.Stock
+	return product.GetStock()
 }
 
 func (s *UnsafeInventoryService) Reserve(productID string, quantity int) error {
 
-	product := s.products[productID]
+	product := s.products[ProductID(productID)]
 	if product == nil {
 		return ErrProductNotFound
 	}
 
-	if product.Stock < quantity {
+	if product.GetStock() < quantity {
 		return ErrInsufficientStock
 	}
 
-	product.Stock -= quantity
+	product.SetStock(product.GetStock() - quantity)
 	return nil
 }

@@ -15,9 +15,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	svc := inventory.NewSafeInventoryService(map[string]*inventory.Product{
-		"A": {ID: "A", Name: "Widget A", Stock: 10},
-		"B": {ID: "B", Name: "Widget B", Stock: 5},
+	svc := inventory.NewSafeInventoryService(map[inventory.ProductID]*inventory.Product{
+		"A": inventory.NewProduct("A", "Widget A", 10),
+		"B": inventory.NewProduct("B", "Widget B", 5),
 	})
 
 	switch os.Args[1] {
@@ -78,7 +78,10 @@ func parseItems(arg string) ([]inventory.ReserveItem, error) {
 		if err != nil || qty <= 0 {
 			return nil, fmt.Errorf("invalid quantity for %q", part)
 		}
-		items = append(items, inventory.ReserveItem{ProductID: p[0], Quantity: qty})
+		items = append(items, inventory.ReserveItem{
+			ProductID: inventory.ProductID(p[0]),
+			Quantity:  qty,
+		})
 	}
 
 	return items, nil
