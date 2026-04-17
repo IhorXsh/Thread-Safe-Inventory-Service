@@ -4,6 +4,12 @@ import (
 	"sync"
 )
 
+type InventoryService interface {
+	GetStock(productID ProductID) uint64
+	Reserve(item ReserveItem) error
+	ReserveMultiple(items []ReserveItem) error
+}
+
 type SafeInventoryService struct {
 	mu       sync.RWMutex
 	products map[ProductID]*Product

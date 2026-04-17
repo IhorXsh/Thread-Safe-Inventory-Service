@@ -13,7 +13,7 @@ import (
 )
 
 type Server struct {
-	svc    *inventory.SafeInventoryService
+	svc    inventory.InventoryService
 	logger *slog.Logger
 	tracer trace.Tracer
 
@@ -24,7 +24,7 @@ type Server struct {
 	router *mux.Router
 }
 
-func New(svc *inventory.SafeInventoryService, logger *slog.Logger, tracer trace.Tracer) *Server {
+func New(svc inventory.InventoryService, logger *slog.Logger, tracer trace.Tracer) *Server {
 	if logger == nil {
 		logger = slog.Default()
 	}
