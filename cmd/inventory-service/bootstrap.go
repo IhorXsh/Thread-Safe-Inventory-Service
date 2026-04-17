@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -27,7 +28,7 @@ func run() error {
 
 	shutdownTracer, err := initTracer()
 	if err != nil {
-		return err
+		return fmt.Errorf("init tracer: %w", err)
 	}
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -89,10 +90,10 @@ func run() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := httpSrv.Shutdown(shutdownCtx); err != nil {
-		return err
+		return fmt.Errorf("shutdown api server: %w", err)
 	}
 	if err := metricsSrv.Shutdown(shutdownCtx); err != nil {
-		return err
+		return fmt.Errorf("shutdown metrics server: %w", err)
 	}
 	logger.Info("inventory server stopped")
 	return nil
@@ -101,7 +102,7 @@ func run() error {
 func initTracer() (func(context.Context) error, error) {
 	exporter, err := stdouttrace.New(stdouttrace.WithPrettyPrint())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create stdout trace exporter: %w", err)
 	}
 
 	res, err := resource.New(context.Background(),
@@ -110,7 +111,7 @@ func initTracer() (func(context.Context) error, error) {
 		),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create otel resource: %w", err)
 	}
 
 	tp := sdktrace.NewTracerProvider(
