@@ -37,16 +37,16 @@ func (s *SafeInventoryService) Reserve(item ReserveItem) error {
 	defer s.mu.Unlock()
 
 	if item.Quantity == 0 {
-		return ErrInvalidQuantity
+		return errInvalidQuantity
 	}
 
 	product := s.products[ProductID(item.ProductID)]
 	if product == nil {
-		return ErrProductNotFound
+		return errProductNotFound
 	}
 
 	if product.GetStock() < item.Quantity {
-		return ErrInsufficientStock
+		return errInsufficientStock
 	}
 
 	product.SetStock(product.GetStock() - item.Quantity)
@@ -59,14 +59,14 @@ func (s *SafeInventoryService) ReserveMultiple(items []ReserveItem) error {
 
 	for _, item := range items {
 		if item.Quantity == 0 {
-			return ErrInvalidQuantity
+			return errInvalidQuantity
 		}
 		product := s.products[item.ProductID]
 		if product == nil {
-			return ErrProductNotFound
+			return errProductNotFound
 		}
 		if product.GetStock() < item.Quantity {
-			return ErrInsufficientStock
+			return errInsufficientStock
 		}
 	}
 

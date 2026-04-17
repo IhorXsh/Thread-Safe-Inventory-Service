@@ -1,7 +1,6 @@
 package inventory
 
 import (
-	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -28,7 +27,7 @@ func TestReserve_ConcurrentOversell(t *testing.T) {
 					atomic.AddInt32(&success, 1)
 					return
 				}
-				if errors.Is(err, ErrInsufficientStock) {
+				if IsInsufficientStock(err) {
 					atomic.AddInt32(&failed, 1)
 					return
 				}
@@ -63,7 +62,7 @@ func TestReserve_ConcurrentOversell(t *testing.T) {
 					atomic.AddInt32(&success, 1)
 					return
 				}
-				if errors.Is(err, ErrInsufficientStock) {
+				if IsInsufficientStock(err) {
 					atomic.AddInt32(&failed, 1)
 					return
 				}
@@ -96,8 +95,8 @@ func TestReserveMultiple(t *testing.T) {
 			{ProductID: "A", Quantity: 8},
 			{ProductID: "B", Quantity: 8},
 		})
-		if !errors.Is(err, ErrInsufficientStock) {
-			t.Fatalf("expected ErrInsufficientStock, got %v", err)
+		if !IsInsufficientStock(err) {
+			t.Fatalf("expected insufficient stock error, got %v", err)
 		}
 
 		if got := svc.GetStock("A"); got != 10 {

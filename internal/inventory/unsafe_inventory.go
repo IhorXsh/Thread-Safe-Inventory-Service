@@ -20,16 +20,16 @@ func (s *UnsafeInventoryService) GetStock(productID string) uint64 {
 
 func (s *UnsafeInventoryService) Reserve(item ReserveItem) error {
 	if item.Quantity == 0 {
-		return ErrInvalidQuantity
+		return errInvalidQuantity
 	}
 
 	product := s.products[item.ProductID]
 	if product == nil {
-		return ErrProductNotFound
+		return errProductNotFound
 	}
 
 	if product.GetStock() < item.Quantity {
-		return ErrInsufficientStock
+		return errInsufficientStock
 	}
 
 	product.SetStock(product.GetStock() - item.Quantity)

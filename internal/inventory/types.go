@@ -48,7 +48,19 @@ func (p *Product) SetStock(stock uint64) {
 }
 
 var (
-	ErrProductNotFound   = errors.New("product not found")
-	ErrInsufficientStock = errors.New("insufficient stock")
-	ErrInvalidQuantity   = errors.New("invalid quantity")
+	errProductNotFound   = errors.New("product not found")
+	errInsufficientStock = errors.New("insufficient stock")
+	errInvalidQuantity   = errors.New("invalid quantity")
 )
+
+func IsProductNotFound(err error) bool {
+	return errors.Is(err, errProductNotFound)
+}
+
+func IsInsufficientStock(err error) bool {
+	return errors.Is(err, errInsufficientStock)
+}
+
+func IsInvalidQuantity(err error) bool {
+	return errors.Is(err, errInvalidQuantity)
+}

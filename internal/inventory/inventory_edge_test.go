@@ -1,7 +1,6 @@
 package inventory
 
 import (
-	"errors"
 	"testing"
 )
 
@@ -12,8 +11,8 @@ func TestSafeInventory_EdgeCases(t *testing.T) {
 		})
 
 		err := svc.Reserve(ReserveItem{ProductID: "", Quantity: 1})
-		if !errors.Is(err, ErrProductNotFound) {
-			t.Fatalf("expected ErrProductNotFound, got %v", err)
+		if !IsProductNotFound(err) {
+			t.Fatalf("expected product not found error, got %v", err)
 		}
 	})
 
@@ -23,8 +22,8 @@ func TestSafeInventory_EdgeCases(t *testing.T) {
 		})
 
 		err := svc.Reserve(ReserveItem{ProductID: "A", Quantity: 0})
-		if !errors.Is(err, ErrInvalidQuantity) {
-			t.Fatalf("expected ErrInvalidQuantity, got %v", err)
+		if !IsInvalidQuantity(err) {
+			t.Fatalf("expected invalid quantity error, got %v", err)
 		}
 	})
 
@@ -36,8 +35,8 @@ func TestSafeInventory_EdgeCases(t *testing.T) {
 		err := svc.ReserveMultiple([]ReserveItem{
 			{ProductID: "", Quantity: 1},
 		})
-		if !errors.Is(err, ErrProductNotFound) {
-			t.Fatalf("expected ErrProductNotFound, got %v", err)
+		if !IsProductNotFound(err) {
+			t.Fatalf("expected product not found error, got %v", err)
 		}
 	})
 
@@ -49,8 +48,8 @@ func TestSafeInventory_EdgeCases(t *testing.T) {
 		err := svc.ReserveMultiple([]ReserveItem{
 			{ProductID: "A", Quantity: 0},
 		})
-		if !errors.Is(err, ErrInvalidQuantity) {
-			t.Fatalf("expected ErrInvalidQuantity, got %v", err)
+		if !IsInvalidQuantity(err) {
+			t.Fatalf("expected invalid quantity error, got %v", err)
 		}
 	})
 

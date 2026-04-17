@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -105,11 +104,11 @@ func decodeJSON(r *http.Request, out any) error {
 
 func writeInventoryError(w http.ResponseWriter, logger *slog.Logger, err error) {
 	switch {
-	case errors.Is(err, inventory.ErrProductNotFound):
+	case inventory.IsProductNotFound(err):
 		writeError(w, logger, http.StatusNotFound, err.Error())
-	case errors.Is(err, inventory.ErrInsufficientStock):
+	case inventory.IsInsufficientStock(err):
 		writeError(w, logger, http.StatusConflict, err.Error())
-	case errors.Is(err, inventory.ErrInvalidQuantity):
+	case inventory.IsInvalidQuantity(err):
 		writeError(w, logger, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, logger, http.StatusInternalServerError, "internal server error")
