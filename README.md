@@ -30,10 +30,8 @@ Optional env var:
 - `POST /reserve`
 - `POST /reserve-multiple`
 
-Request ID:
-- Header: `X-Request-ID`
-- If provided and valid UUID, server reuses it.
-- If missing/invalid, server generates a UUID and returns it in `X-Request-ID`.
+Trace ID:
+- Request/response logs are correlated with `trace_id` from OpenTelemetry span context.
 
 Response format:
 - All handlers return:
