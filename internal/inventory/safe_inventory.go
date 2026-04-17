@@ -15,11 +15,11 @@ func NewSafeInventoryService(products map[ProductID]*Product) *SafeInventoryServ
 	}
 }
 
-func (s *SafeInventoryService) GetStock(productID string) uint64 {
+func (s *SafeInventoryService) GetStock(productID ProductID) uint64 {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	product := s.products[ProductID(productID)]
+	product := s.products[productID]
 	if product == nil {
 		return 0
 	}
