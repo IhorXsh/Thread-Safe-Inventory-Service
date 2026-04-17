@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/IhorXsh/Thread-Safe-Inventory-Service/internal/inventory"
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 )
 
@@ -33,44 +32,6 @@ func TestHTTPEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("request id generated when missing", func(t *testing.T) {
-		ts := newTestServer(t)
-		defer ts.Close()
-
-		resp := mustRequest(t, http.MethodGet, ts.URL+"/healthz", nil)
-		defer resp.Body.Close()
-
-		requestID := resp.Header.Get(requestIDHeader)
-		if requestID == "" {
-			t.Fatalf("expected %s header in response", requestIDHeader)
-		}
-		if _, err := uuid.Parse(requestID); err != nil {
-			t.Fatalf("expected valid uuid request id, got %q", requestID)
-		}
-	})
-
-	t.Run("request id from header is preserved", func(t *testing.T) {
-		ts := newTestServer(t)
-		defer ts.Close()
-
-		incoming := uuid.NewString()
-		req, err := http.NewRequest(http.MethodGet, ts.URL+"/healthz", nil)
-		if err != nil {
-			t.Fatalf("failed to create request: %v", err)
-		}
-		req.Header.Set(requestIDHeader, incoming)
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatalf("failed to execute request: %v", err)
-		}
-		defer resp.Body.Close()
-
-		if got := resp.Header.Get(requestIDHeader); got != incoming {
-			t.Fatalf("expected response request id %q, got %q", incoming, got)
-		}
-	})
-
 	t.Run("get stock", func(t *testing.T) {
 		ts := newTestServer(t)
 		defer ts.Close()
@@ -82,9 +43,8 @@ func TestHTTPEndpoints(t *testing.T) {
 			t.Fatalf("expected status 200, got %d", resp.StatusCode)
 		}
 
-		var body map[string]any
-		decodeResponseData(t, resp.Body, &body)
-		if got := asUint64(t, body["stock"]); got != 10 {
+		data := decodeStockData(t, resp.Body)
+		if got := data.Stock; got != 10 {
 			t.Fatalf("expected stock 10, got %d", got)
 		}
 	})
@@ -109,9 +69,8 @@ func TestHTTPEndpoints(t *testing.T) {
 		stockResp := mustRequest(t, http.MethodGet, ts.URL+"/stock/A", nil)
 		defer stockResp.Body.Close()
 
-		var body map[string]any
-		decodeResponseData(t, stockResp.Body, &body)
-		if got := asUint64(t, body["stock"]); got != 8 {
+		data := decodeStockData(t, stockResp.Body)
+		if got := data.Stock; got != 8 {
 			t.Fatalf("expected stock 8 after reserve, got %d", got)
 		}
 	})
@@ -158,17 +117,15 @@ func TestHTTPEndpoints(t *testing.T) {
 
 		stockA := mustRequest(t, http.MethodGet, ts.URL+"/stock/A", nil)
 		defer stockA.Body.Close()
-		var bodyA map[string]any
-		decodeResponseData(t, stockA.Body, &bodyA)
-		if got := asUint64(t, bodyA["stock"]); got != 8 {
+		dataA := decodeStockData(t, stockA.Body)
+		if got := dataA.Stock; got != 8 {
 			t.Fatalf("expected A stock 8, got %d", got)
 		}
 
 		stockB := mustRequest(t, http.MethodGet, ts.URL+"/stock/B", nil)
 		defer stockB.Body.Close()
-		var bodyB map[string]any
-		decodeResponseData(t, stockB.Body, &bodyB)
-		if got := asUint64(t, bodyB["stock"]); got != 4 {
+		dataB := decodeStockData(t, stockB.Body)
+		if got := dataB.Stock; got != 4 {
 			t.Fatalf("expected B stock 4, got %d", got)
 		}
 	})
@@ -197,23 +154,21 @@ func TestHTTPEndpoints(t *testing.T) {
 
 		stockA := mustRequest(t, http.MethodGet, ts.URL+"/stock/A", nil)
 		defer stockA.Body.Close()
-		var bodyA map[string]any
-		decodeResponseData(t, stockA.Body, &bodyA)
-		if got := asUint64(t, bodyA["stock"]); got != 10 {
+		dataA := decodeStockData(t, stockA.Body)
+		if got := dataA.Stock; got != 10 {
 			t.Fatalf("expected A stock unchanged at 10, got %d", got)
 		}
 
 		stockB := mustRequest(t, http.MethodGet, ts.URL+"/stock/B", nil)
 		defer stockB.Body.Close()
-		var bodyB map[string]any
-		decodeResponseData(t, stockB.Body, &bodyB)
-		if got := asUint64(t, bodyB["stock"]); got != 5 {
+		dataB := decodeStockData(t, stockB.Body)
+		if got := dataB.Stock; got != 5 {
 			t.Fatalf("expected B stock unchanged at 5, got %d", got)
 		}
 	})
 }
 
-func decodeResponseData(t *testing.T, r io.Reader, out any) {
+func decodeStockData(t *testing.T, r io.Reader) *StockData {
 	t.Helper()
 
 	var resp Response
@@ -221,18 +176,10 @@ func decodeResponseData(t *testing.T, r io.Reader, out any) {
 	if resp.Status != StatusOK {
 		t.Fatalf("expected response status ok, got %q", resp.Status)
 	}
-
-	dataMap, ok := resp.Data.(map[string]any)
-	if !ok {
-		t.Fatalf("unexpected response data type: %T", resp.Data)
+	if resp.Data == nil {
+		t.Fatal("expected stock data in response, got nil")
 	}
-	b, err := json.Marshal(dataMap)
-	if err != nil {
-		t.Fatalf("failed to marshal response data: %v", err)
-	}
-	if err := json.Unmarshal(b, out); err != nil {
-		t.Fatalf("failed to unmarshal response data: %v", err)
-	}
+	return resp.Data
 }
 
 func newTestServer(t *testing.T) *httptest.Server {
@@ -289,14 +236,4 @@ func decodeJSONBody(t *testing.T, r io.Reader, out any) {
 	if err := json.NewDecoder(r).Decode(out); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
-}
-
-func asUint64(t *testing.T, v any) uint64 {
-	t.Helper()
-
-	f, ok := v.(float64)
-	if !ok {
-		t.Fatalf("unexpected type for numeric field: %T", v)
-	}
-	return uint64(f)
 }

@@ -15,14 +15,14 @@ func (s *Server) handleGetStock(w http.ResponseWriter, r *http.Request) {
 	productID := pathVar(r, "productID")
 	logger.Info("request received", "method", r.Method, "path", routeTemplate(r), "product_id", productID)
 
-	stock := s.svc.GetStock(productID)
+	stock := s.svc.GetStock(inventory.ProductID(productID))
 	logger.Info("get stock computed", "product_id", productID, "stock", stock)
 
 	writeJSON(w, logger, http.StatusOK, Response{
 		Status: StatusOK,
-		Data: map[string]any{
-			"product_id": productID,
-			"stock":      stock,
+		Data: &StockData{
+			ProductID: ProductID(productID),
+			Stock:     stock,
 		},
 	})
 }

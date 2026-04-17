@@ -21,5 +21,10 @@ const (
 type Response struct {
 	Status ResponseStatus `json:"status"`
 	Error  string         `json:"error,omitempty"`
-	Data   any            `json:"data,omitempty"`
+	Data   *StockData     `json:"data,omitempty"`
+}
+
+type StockData struct {
+	ProductID ProductID `json:"product_id"`
+	Stock     uint64    `json:"stock"`
 }

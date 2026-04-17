@@ -1,23 +1,15 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
-
-const requestIDHeader = "X-Request-ID"
-
-type requestContextKey string
-
-const requestIDContextKey requestContextKey = "request_id"
 
 type statusRecorder struct {
 	http.ResponseWriter
@@ -31,16 +23,11 @@ func (sr *statusRecorder) WriteHeader(code int) {
 
 func (s *Server) observabilityMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestID := resolveRequestID(r.Header.Get(requestIDHeader))
-		w.Header().Set(requestIDHeader, requestID)
-
-		reqLogger := s.logger.With("request_id", requestID)
-		reqWithContext := r.WithContext(withRequestID(r.Context(), requestID))
-
 		startedAt := timeNow()
-		span, reqWithTrace := s.startSpan(reqWithContext)
+		span, reqWithTrace := s.startSpan(r)
 		defer span.End()
-		span.SetAttributes(attribute.String("http.request_id", requestID))
+
+		reqLogger := s.requestLogger(reqWithTrace)
 
 		rec := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(rec, reqWithTrace)
@@ -84,35 +71,12 @@ func pathVar(r *http.Request, key string) string {
 	return mux.Vars(r)[key]
 }
 
-func resolveRequestID(incoming string) string {
-	if incoming == "" {
-		return uuid.NewString()
-	}
-	if _, err := uuid.Parse(incoming); err != nil {
-		return uuid.NewString()
-	}
-	return incoming
-}
-
-func withRequestID(ctx context.Context, requestID string) context.Context {
-	return context.WithValue(ctx, requestIDContextKey, requestID)
-}
-
-func requestIDFromContext(ctx context.Context) string {
-	v := ctx.Value(requestIDContextKey)
-	requestID, ok := v.(string)
-	if !ok {
-		return ""
-	}
-	return requestID
-}
-
 func (s *Server) requestLogger(r *http.Request) *slog.Logger {
-	requestID := requestIDFromContext(r.Context())
-	if requestID == "" {
+	spanCtx := trace.SpanFromContext(r.Context()).SpanContext()
+	if !spanCtx.IsValid() {
 		return s.logger
 	}
-	return s.logger.With("request_id", requestID)
+	return s.logger.With("trace_id", spanCtx.TraceID().String())
 }
 
 var timeNow = func() time.Time {
